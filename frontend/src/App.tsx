@@ -159,7 +159,7 @@ export default function App() {
   const [riskFilter, setRiskFilter] = useState<'all' | RiskLevel>('all');
   
   const [pushEnabled, setPushEnabled] = useState(true);
-  const [emailEnabled, setEmailEnabled] = useState(false);
+  const [emailAddress, setEmailAddress] = useState('');
   const [theme, setTheme] = useState<'dark' | 'light'>('dark');
   const [language, setLanguage] = useState<'es-AR' | 'en-US'>('es-AR');
 
@@ -178,7 +178,7 @@ export default function App() {
       try {
         const parsed = JSON.parse(storedSettings);
         if (parsed.pushEnabled !== undefined) setPushEnabled(parsed.pushEnabled);
-        if (parsed.emailEnabled !== undefined) setEmailEnabled(parsed.emailEnabled);
+        if (parsed.emailAddress !== undefined) setEmailAddress(parsed.emailAddress);
         if (parsed.theme) setTheme(parsed.theme);
         if (parsed.language) setLanguage(parsed.language);
       } catch {}
@@ -186,10 +186,10 @@ export default function App() {
   }, []);
 
   const saveSettings = (newSettings: any) => {
-    const updated = { pushEnabled, emailEnabled, theme, language, ...newSettings };
+    const updated = { pushEnabled, emailAddress, theme, language, ...newSettings };
     localStorage.setItem('avivate_settings', JSON.stringify(updated));
     if (newSettings.pushEnabled !== undefined) setPushEnabled(newSettings.pushEnabled);
-    if (newSettings.emailEnabled !== undefined) setEmailEnabled(newSettings.emailEnabled);
+    if (newSettings.emailAddress !== undefined) setEmailAddress(newSettings.emailAddress);
     if (newSettings.theme !== undefined) setTheme(newSettings.theme);
     if (newSettings.language !== undefined) setLanguage(newSettings.language);
   };
@@ -774,12 +774,13 @@ export default function App() {
                         <p className="text-white font-semibold text-sm">{t.set_email}</p>
                         <p className="text-white/60 text-xs mt-0.5">{t.set_email_desc}</p>
                      </div>
-                     <button 
-                        onClick={() => saveSettings({ emailEnabled: !emailEnabled })}
-                        className={`w-12 h-6 rounded-full relative transition-colors duration-300 ${emailEnabled ? 'bg-av-accent-green' : 'bg-av-primary-green/30'}`}
-                     >
-                        <div className={`w-4 h-4 rounded-full bg-white absolute top-1 transition-all duration-300 shadow-sm ${emailEnabled ? 'left-7' : 'left-1'}`}></div>
-                     </button>
+                      <input
+                        type="email"
+                        placeholder="tu@correo.com"
+                        value={emailAddress}
+                        onChange={(e) => saveSettings({ emailAddress: e.target.value })}
+                        className="w-full bg-av-bg border border-av-primary-green/30 rounded-xl py-3 px-4 text-sm text-white placeholder:text-white/40 focus:outline-none focus:border-av-accent-green transition-all"
+                     />
                   </div>
                </div>
             </div>
