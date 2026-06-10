@@ -212,7 +212,9 @@ export default function App() {
     
     try {
       // Petición asíncrona real a tu motor de IA
-      const response = await fetch('http://192.168.101.24:8000/predict', {
+      // ANTES: const response = await fetch('http://192.168.101.24:8000/predict', {
+      // AHORA:
+      const response = await fetch('https://avivate-app-render.onrender.com', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
