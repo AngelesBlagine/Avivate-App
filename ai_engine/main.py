@@ -19,7 +19,7 @@ app.add_middleware(
 
 # --- 2. CONFIGURACIÓN DE SUPABASE ---
 # ATENCIÓN: Reemplaza estos valores con los de tu panel de Supabase (Project Settings -> API)
-SUPABASE_URL = "https://yzadlngdxrpfeiuzmsvw.supabase.co/rest/v1/"
+SUPABASE_URL = "https://yzadlngdxrpfeiuzmsvw.supabase.co"
 SUPABASE_KEY = "sb_publishable_VL-nHKYUz_iBTgF8E0FoSQ_wYqO8rmj"
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 # ------------------------------------
