@@ -41,7 +41,11 @@ class EmailInput(BaseModel):
 @app.post("/predict")
 def predict_email(email: EmailInput):
     if not email.text.strip():
-        return {"probabilidad": 0.0, "es_phishing": False}
+        return {
+            "score": 0,
+            "level": "safe",
+            "reasons": ["El texto ingresado está vacío."]
+        }
         
     # Transformar texto a números
     text_tfidf = vectorizer.transform([email.text])
@@ -81,8 +85,16 @@ def predict_email(email: EmailInput):
         print(f"❌ Error al guardar en Supabase: {e}")
     # --------------------------------------------------
 
-    # Retornamos exactamente lo que React espera recibir
+    # Generamos un motivo basado en si es phishing o seguro
+    motivos = (
+        ["El modelo de IA detectó patrones de phishing en el texto."] 
+        if es_phish 
+        else ["No se encontraron amenazas evidentes en el texto."]
+    )
+
+    # Retornamos los campos que el frontend de React está esperando leer
     return {
-        "probabilidad": prob_redondeada,
-        "es_phishing": es_phish
+        "score": score_porcentaje,
+        "level": risk_level,
+        "reasons": motivos
     }
