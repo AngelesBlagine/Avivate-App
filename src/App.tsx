@@ -240,51 +240,57 @@ export default function App() {
   const currentLength = text.length;
   const maxLength = 10000;
 
-  const handleAnalyze = () => {
+  const handleAnalyze = async () => {
     if (text.trim() === '') return;
     setView('loading');
 
-    setTimeout(() => {
-      const score = Math.floor(Math.random() * 100);
-      const level = score > 70 ? 'danger' : score > 30 ? 'doubt' : 'safe';
-      const snippet = text.trim().split('\n')[0].substring(0, 30) + (text.length > 30 ? '...' : '');
+    try {
+      // Aquí hacemos la llamada real a tu backend en Render usando la variable de Vercel
+      // NOTA: Cambia '/analizar' por la ruta exacta que usaste en tu Python (ej: '/api/analyze')
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/analizar`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        // Enviamos el texto que escribió el usuario
+        body: JSON.stringify({ text: text.trim() })
+      });
 
-      let reasons: string[] = [];
-      if (level === 'danger') {
-        reasons = [
-          "Enlace sospechoso detectado (El dominio no coincide)",
-          "Lenguaje urgente o intimidante",
-          "Solicitud de datos sensibles (Pide credenciales)"
-        ];
-      } else if (level === 'doubt') {
-        reasons = [
-          "Enlace con dominio poco frecuente",
-          "Falta de personalización (Saludo genérico)"
-        ];
-      } else {
-        reasons = [
-          "Dominio de remitente con buena reputación",
-          "No se encontraron enlaces ocultos ni adjuntos peligrosos"
-        ];
+      if (!response.ok) {
+        throw new Error(`Error del servidor: ${response.status}`);
       }
 
+      // Recibimos la respuesta real de tu IA hecha a mano
+      const data = await response.json();
+
+      const snippet = text.trim().split('\n')[0].substring(0, 30) + (text.length > 30 ? '...' : '');
+
+      // Construimos el historial usando los datos que devolvió tu Python
       const newAnalysis: HistoryItem = {
-        id: Date.now().toString(),
+        id: data.id || Date.now().toString(),
         date: new Date().toLocaleString('es-AR', { dateStyle: 'medium', timeStyle: 'short' }).toUpperCase(),
-        score,
-        level,
+        score: data.score, // Viene del backend
+        level: data.level, // Viene del backend
         snippet: snippet || 'Correo sin asunto',
-        reasons,
+        reasons: data.reasons, // Viene del backend
         fullText: text.trim()
       };
 
       setCurrentAnalysis(newAnalysis);
       const newHistory = [newAnalysis, ...history];
       setHistory(newHistory);
+
+      // Opcional: Puedes mantener esto si quieres que el historial sobreviva al recargar la página
       localStorage.setItem('avivate_history', JSON.stringify(newHistory));
 
       setView('result');
-    }, 2000);
+
+    } catch (error) {
+      console.error("Fallo la conexión con el motor de IA:", error);
+      // Opcional: Aquí podrías poner un setView('error') si tienes una pantalla para eso
+      alert("Hubo un error al conectar con el servidor de IA.");
+      setView('analyze'); // Volvemos a la pantalla de inicio
+    }
   };
 
   const resetAnalysis = () => {
@@ -511,13 +517,13 @@ export default function App() {
 
                     <div className="flex flex-col items-center justify-center relative">
                       <div className={`text-[5rem] leading-none font-bold tracking-tighter ${currentAnalysis.level === 'danger' ? 'text-av-danger' :
-                          currentAnalysis.level === 'doubt' ? 'text-av-doubt' : 'text-av-safe'
+                        currentAnalysis.level === 'doubt' ? 'text-av-doubt' : 'text-av-safe'
                         }`}>
                         {currentAnalysis.score}<span className="text-4xl opacity-80">%</span>
                       </div>
                       <div className={`text-sm font-bold uppercase tracking-widest mt-2 px-3 py-1 rounded-full border ${currentAnalysis.level === 'danger' ? 'text-av-danger bg-av-danger/10 border-av-danger/20' :
-                          currentAnalysis.level === 'doubt' ? 'text-av-doubt bg-av-doubt/10 border-av-doubt/20' :
-                            'text-av-safe bg-av-safe/10 border-av-safe/20'
+                        currentAnalysis.level === 'doubt' ? 'text-av-doubt bg-av-doubt/10 border-av-doubt/20' :
+                          'text-av-safe bg-av-safe/10 border-av-safe/20'
                         }`}>
                         {currentAnalysis.level === 'danger' ? t.high_risk :
                           currentAnalysis.level === 'doubt' ? t.med_risk : t.low_risk}
@@ -527,22 +533,22 @@ export default function App() {
                     {/* Progress bar line */}
                     <div className="w-full h-2 bg-av-bg border border-av-fg/10 rounded-full overflow-hidden mt-2 relative">
                       <div className={`absolute top-0 left-0 h-full rounded-full relative transition-all duration-1000 ease-out ${currentAnalysis.level === 'danger' ? 'bg-av-danger' :
-                          currentAnalysis.level === 'doubt' ? 'bg-av-doubt' : 'bg-av-safe'
+                        currentAnalysis.level === 'doubt' ? 'bg-av-doubt' : 'bg-av-safe'
                         }`} style={{ width: `${currentAnalysis.score}%` }}>
                         <div className={`absolute right-0 top-1/2 -translate-y-1/2 w-4 h-4 rounded-full border-2 border-[#010D03] scale-[1.5] ${currentAnalysis.level === 'danger' ? 'bg-av-danger' :
-                            currentAnalysis.level === 'doubt' ? 'bg-av-doubt' : 'bg-av-safe'
+                          currentAnalysis.level === 'doubt' ? 'bg-av-doubt' : 'bg-av-safe'
                           }`}></div>
                       </div>
                     </div>
                   </div>
 
                   <div className={`border rounded-2xl p-5 flex items-start gap-4 mt-2 ${currentAnalysis.level === 'danger' ? 'bg-av-card-danger border-av-danger/40' :
-                      currentAnalysis.level === 'doubt' ? 'bg-av-card-doubt border-av-doubt/40' :
-                        'bg-av-card-safe border-av-safe/40'
+                    currentAnalysis.level === 'doubt' ? 'bg-av-card-doubt border-av-doubt/40' :
+                      'bg-av-card-safe border-av-safe/40'
                     }`}>
                     <TriangleAlert className={`w-7 h-7 shrink-0 ${currentAnalysis.level === 'danger' ? 'text-av-danger drop-shadow-[0_0_8px_rgba(242,65,65,0.5)]' :
-                        currentAnalysis.level === 'doubt' ? 'text-av-doubt drop-shadow-[0_0_8px_rgba(248,195,64,0.5)]' :
-                          'text-av-safe drop-shadow-[0_0_8px_rgba(118,217,48,0.5)]'
+                      currentAnalysis.level === 'doubt' ? 'text-av-doubt drop-shadow-[0_0_8px_rgba(248,195,64,0.5)]' :
+                        'text-av-safe drop-shadow-[0_0_8px_rgba(118,217,48,0.5)]'
                       }`} />
                     <p className="text-sm text-av-fg/90 leading-relaxed">
                       {currentAnalysis.level === 'danger' ? (
@@ -624,8 +630,8 @@ export default function App() {
                         .map(item => (
                           <div key={item.id} onClick={() => { setCurrentAnalysis(item); setDetailsOrigin('history'); setView('details'); }} className="bg-av-card border border-av-primary-green/30 rounded-2xl p-4 flex items-center gap-4 transition-all active:scale-[0.98] cursor-pointer hover:border-av-primary-green/60">
                             <div className={`w-4 h-4 rounded-full shrink-0 ${item.level === 'danger' ? 'bg-av-danger drop-shadow-[0_0_8px_rgba(242,65,65,0.8)]' :
-                                item.level === 'doubt' ? 'bg-av-doubt drop-shadow-[0_0_8px_rgba(248,195,64,0.8)]' :
-                                  'bg-av-safe drop-shadow-[0_0_8px_rgba(118,217,48,0.8)]'
+                              item.level === 'doubt' ? 'bg-av-doubt drop-shadow-[0_0_8px_rgba(248,195,64,0.8)]' :
+                                'bg-av-safe drop-shadow-[0_0_8px_rgba(118,217,48,0.8)]'
                               }`}></div>
                             <div className="flex-1 min-w-0">
                               <p className="text-av-fg font-semibold truncate text-[15px]">{item.snippet}</p>
@@ -744,18 +750,18 @@ export default function App() {
                   </div>
 
                   <div className={`border rounded-2xl p-4 flex items-center justify-between ${currentAnalysis.level === 'danger' ? 'bg-av-card-danger border-av-danger/40' :
-                      currentAnalysis.level === 'doubt' ? 'bg-av-card-doubt border-av-doubt/40' :
-                        'bg-av-card-safe border-av-safe/40'
+                    currentAnalysis.level === 'doubt' ? 'bg-av-card-doubt border-av-doubt/40' :
+                      'bg-av-card-safe border-av-safe/40'
                     }`}>
                     <span className="text-av-fg/80 text-sm font-semibold uppercase tracking-wider">{t.score_label}</span>
                     <div className="flex items-center gap-2">
                       <span className={`text-xl font-black ${currentAnalysis.level === 'danger' ? 'text-av-danger' :
-                          currentAnalysis.level === 'doubt' ? 'text-av-doubt' :
-                            'text-av-safe'
+                        currentAnalysis.level === 'doubt' ? 'text-av-doubt' :
+                          'text-av-safe'
                         }`}>{currentAnalysis.score}%</span>
                       <span className={`text-xs px-2 py-1 rounded-md font-bold uppercase tracking-wide ${currentAnalysis.level === 'danger' ? 'bg-av-danger/20 text-av-danger' :
-                          currentAnalysis.level === 'doubt' ? 'bg-av-doubt/20 text-av-doubt' :
-                            'bg-av-safe/20 text-av-safe'
+                        currentAnalysis.level === 'doubt' ? 'bg-av-doubt/20 text-av-doubt' :
+                          'bg-av-safe/20 text-av-safe'
                         }`}>
                         {currentAnalysis.level === 'danger' ? t.high_risk :
                           currentAnalysis.level === 'doubt' ? t.med_risk : t.low_risk}
@@ -778,8 +784,8 @@ export default function App() {
                           <div key={index} className="bg-av-card border border-av-primary-green/30 rounded-2xl p-4 flex items-start gap-4 transition-all">
                             <div className="shrink-0 mt-1">
                               <div className={`w-3 h-3 rounded-full ${currentAnalysis.level === 'danger' ? 'bg-av-danger drop-shadow-[0_0_6px_rgba(242,65,65,0.8)]' :
-                                  currentAnalysis.level === 'doubt' ? 'bg-av-doubt drop-shadow-[0_0_6px_rgba(248,195,64,0.8)]' :
-                                    'bg-av-safe drop-shadow-[0_0_6px_rgba(118,217,48,0.8)]'
+                                currentAnalysis.level === 'doubt' ? 'bg-av-doubt drop-shadow-[0_0_6px_rgba(248,195,64,0.8)]' :
+                                  'bg-av-safe drop-shadow-[0_0_6px_rgba(118,217,48,0.8)]'
                                 }`}></div>
                             </div>
                             <div className="space-y-1">
@@ -804,12 +810,12 @@ export default function App() {
                   </div>
 
                   <div className={`border rounded-2xl p-4 mt-2 ${currentAnalysis.level === 'danger' ? 'bg-av-card-danger border-av-danger/20' :
-                      currentAnalysis.level === 'doubt' ? 'bg-av-card-doubt border-av-doubt/20' :
-                        'bg-av-card-safe border-av-safe/20'
+                    currentAnalysis.level === 'doubt' ? 'bg-av-card-doubt border-av-doubt/20' :
+                      'bg-av-card-safe border-av-safe/20'
                     }`}>
                     <h3 className={`text-sm font-bold tracking-wide uppercase mb-2 ${currentAnalysis.level === 'danger' ? 'text-av-danger' :
-                        currentAnalysis.level === 'doubt' ? 'text-av-doubt' :
-                          'text-av-safe'
+                      currentAnalysis.level === 'doubt' ? 'text-av-doubt' :
+                        'text-av-safe'
                       }`}>{t.advice}</h3>
                     <p className="text-av-fg/80 text-sm leading-relaxed flex items-start gap-2">
                       <Lightbulb className="w-4 h-4 shrink-0 mt-0.5 opacity-80" />
