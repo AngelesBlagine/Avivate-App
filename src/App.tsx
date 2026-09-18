@@ -247,7 +247,7 @@ export default function App() {
     try {
       // Aquí hacemos la llamada real a tu backend en Render usando la variable de Vercel
       // NOTA: Cambia '/analizar' por la ruta exacta que usaste en tu Python (ej: '/api/analyze')
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/analizar`, {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/predict`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
