@@ -54,6 +54,11 @@ def predict_email(email: EmailInput):
     prob_redondeada = round(float(phishing_prob), 4)
     es_phish = bool(phishing_prob > 0.5)
 
+    # --- AGREGA ESTAS LÍNEAS PARA DEPURAR ---
+    print(f"DEBUG - Texto analizado: {email.text[:30]}...")
+    print(f"DEBUG - Probabilidad cruda de la IA (phishing_prob): {phishing_prob}")
+    # ----------------------------------------
+
     # --- 3. LÓGICA PARA GUARDAR EN LA BASE DE DATOS ---
     # Convertimos los datos al formato que espera nuestra tabla
     score_porcentaje = int(prob_redondeada * 100)
